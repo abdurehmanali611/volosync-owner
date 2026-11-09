@@ -110,3 +110,43 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/*
+ * Tailwind v4 emits `rounded-full` as `calc(infinity * 1px)`, which
+ * lightningcss resolves to `border-radius: 3.40282e38px` (f32::MAX). That
+ * value overflows the lightningcss JS visitor deserializer on native
+ * ("expected a 32-bit floating point, found i64::MAX") and kills the bundle.
+ * Re-register the utility with a native-safe value via Tailwind's @utility
+ * directive, which replaces the built-in one.
+ */
+@utility rounded-full {
+  border-radius: 9999px;
+}
+@utility rounded-t-full {
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+}
+@utility rounded-b-full {
+  border-bottom-left-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+@utility rounded-l-full {
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+}
+@utility rounded-r-full {
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+@utility rounded-ss-full {
+  border-start-start-radius: 9999px;
+}
+@utility rounded-se-full {
+  border-start-end-radius: 9999px;
+}
+@utility rounded-ee-full {
+  border-end-end-radius: 9999px;
+}
+@utility rounded-es-full {
+  border-end-start-radius: 9999px;
+}
