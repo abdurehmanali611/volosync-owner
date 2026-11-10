@@ -31,7 +31,7 @@ import {
 } from "@/lib/api";
 import { refreshScope } from "@/lib/scope";
 import { useSession } from "@/lib/session";
-import { C, G, kindTone, radius, subscriptionTone } from "@/lib/theme";
+import { branchKind, C, G, kindTone, radius, subscriptionTone } from "@/lib/theme";
 
 export default function Company() {
   const { session, reload, signOut, state } = useSession();
@@ -275,7 +275,7 @@ export default function Company() {
                   <Badge
                     key={line.line_id}
                     label={line.name}
-                    tone={kindTone(line.is_main ? "main" : "satellite")}
+                    tone={kindTone(branchKind(line.is_main))}
                   />
                 ))}
               </View>
@@ -328,7 +328,11 @@ export default function Company() {
         <StatTile
           label="Main branch"
           value={company.is_main ? company.name : "A branch holds it"}
-          hint="Set from the Branches tab"
+          hint={
+            company.is_main
+              ? "The company root heads the network"
+              : "The root is a satellite until promoted"
+          }
           icon="star"
           stops={G.gold}
         />

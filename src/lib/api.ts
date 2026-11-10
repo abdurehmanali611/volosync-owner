@@ -221,6 +221,12 @@ export type Overview = {
   new_lots: number;
   issued_in_period: string;
   returned_in_period: string;
+  cost_of_sold: string;
+  selling_of_sold: string;
+  gross_profit: string;
+  profit_margin: string;
+  average_unit_cost: string;
+  average_unit_selling: string;
 };
 
 export type AgentRow = {

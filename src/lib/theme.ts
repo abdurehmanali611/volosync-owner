@@ -91,6 +91,15 @@ export function kindTone(kind: string): Tone {
     : { label: "Satellite", fg: C.cyan, soft: "rgba(34,211,238,0.14)", stops: G.agents };
 }
 
+/**
+ * The company root is never a third kind: it is the main branch when it holds
+ * that flag, otherwise it is just another satellite. Anything that is not main
+ * is a satellite by default.
+ */
+export function branchKind(isMain: boolean | null | undefined): "main" | "satellite" {
+  return isMain ? "main" : "satellite";
+}
+
 /** Leaderboard medal colours for ranks 1–3. */
 export function medalTone(rank: number): Tone {
   if (rank === 1) return { label: "1", fg: C.amber, soft: "rgba(251,191,36,0.16)", stops: G.gold };

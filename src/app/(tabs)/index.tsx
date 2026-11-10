@@ -7,12 +7,12 @@ import {
   EmptyState,
   ErrorState,
   HeroCard,
+  KpiCard,
   LoadingState,
   Panel,
   PageTitle,
   RefreshButton,
   Screen,
-  StatTile,
 } from "@/components/kit";
 import {
   AgentBoard,
@@ -20,6 +20,7 @@ import {
   BranchScopePicker,
   ItemBoard,
   PeriodPicker,
+  ReportKpiStrip,
   RevenueTrend,
   SubscriptionStrip,
 } from "@/components/reports-bits";
@@ -91,34 +92,36 @@ export default function Pulse() {
             badge={<Frost label={newLotsLabel(data.overview.new_lots)} />}
           />
 
+          <ReportKpiStrip data={data} />
+
           <View style={styles.tileGrid}>
-            <StatTile
+            <KpiCard
               label="Stock in store"
               value={moneyShort(data.overview.in_store_value)}
               hint={`${num(data.overview.in_store_units, 2)} units`}
               icon="box"
-              stops={G.stock}
+              tone="emerald"
             />
-            <StatTile
+            <KpiCard
               label="Registered (VAT-incl.)"
               value={moneyShort(data.overview.registered_value)}
               hint={`${num(data.overview.lots)} lots on file`}
               icon="receipt"
-              stops={G.tax}
+              tone="slate"
             />
-            <StatTile
+            <KpiCard
               label="VAT inside sales"
               value={moneyShort(data.overview.vat_collected)}
               hint={`${num(data.company.vat_rate, 2)}% read out of the price`}
               icon="tax"
-              stops={G.hero}
+              tone="sky"
             />
-            <StatTile
+            <KpiCard
               label="Penalties"
               value={moneyShort(data.overview.penalty_amount)}
               hint={`${num(data.overview.penalties)} rulings`}
               icon="warn"
-              stops={G.danger}
+              tone="rose"
             />
           </View>
 
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.35)",
   },
   frostText: { color: C.white, fontSize: 11, fontWeight: "900" },
-  tileGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  tileGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 18 },
   queueRow: { flexDirection: "row", gap: 9 },
   queuePill: {
     flex: 1,

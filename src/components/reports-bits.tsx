@@ -1,19 +1,31 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
 
 import {
   Badge,
   BarChart,
   ComboBox,
   Glyph,
+  KpiCard,
   Panel,
   Popover,
   ShareBars,
   type IconName,
+  type KpiTone,
   type Stops,
 } from "@/components/kit";
 import { Calendar } from "@/components/calendar";
-import { CHART, C, G, medalTone, radius, subscriptionTone } from "@/lib/theme";
+import { branchKind, CHART, C, G, medalTone, radius, subscriptionTone } from "@/lib/theme";
 import {
   dateLabel,
   money,
@@ -22,6 +34,7 @@ import {
   RANGES,
   type AgentRow,
   type BranchRow,
+  type Reports,
   type Subscription,
 } from "@/lib/api";
 
@@ -253,7 +266,7 @@ export function BranchCompare({
     <View style={{ gap: 14 }}>
       <ShareBars
         rows={rows.map((row, index) => ({
-          label: `${row.name} · ${row.kind === "main" ? "Main" : "Satellite"}`,
+          label: `${row.name} · ${branchKind(row.kind === "main") === "main" ? "Main" : "Satellite"}`,
           value: Number(row.revenue || 0),
           display: money(row.revenue),
           color: CHART[index % CHART.length],
@@ -299,6 +312,211 @@ export function NotePanel({
     </Panel>
   );
 }
+
+/**
+ * One card per screen width, snapping card by card. The rail bleeds past the
+ * screen padding so a card is the full phone width, then the card itself keeps
+ * a little horizontal padding inside that width.
+ */
+const RAIL_GAP = 12;
+const RAIL_BLEED = 16;
+const RAIL_INSET = 4;
+const CARD_INSET = 10;
+
+export function CardRail({
+  count,
+  height,
+  children,
+}: {
+  count: number;
+  height: number;
+  children: (width: number) => React.ReactNode;
+}) {
+  const { width: windowWidth } = useWindowDimensions();
+  const [width, setWidth] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [index, setIndex] = useState(0);
+  useEffect(() => setMounted(true), []);
+  const fallbackWidth = Math.max(0, windowWidth - 64);
+  const railWidth = width || (mounted ? fallbackWidth : 0);
+  const cardWidth = Math.min(Math.max(0, railWidth - CARD_INSET * 2), 300);
+  const step = cardWidth + RAIL_GAP;
+  const safeCount = Math.max(1, count);
+
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!step) return;
+    const next = Math.round(event.nativeEvent.contentOffset.x / step);
+    setIndex(Math.max(0, Math.min(safeCount - 1, next)));
+  };
+
+  return (
+    <View style={{ gap: 8 }}>
+      <View
+        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+        style={{ marginHorizontal: -RAIL_BLEED }}
+      >
+        {cardWidth ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={step}
+            snapToAlignment="start"
+            disableIntervalMomentum
+            decelerationRate="fast"
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={{
+              gap: RAIL_GAP,
+              paddingHorizontal: RAIL_BLEED + RAIL_INSET,
+              paddingBottom: 4,
+            }}
+          >
+            {children(cardWidth)}
+          </ScrollView>
+        ) : (
+          <View style={{ height }} />
+        )}
+      </View>
+      {safeCount > 1 ? (
+        <View style={styles.dots}>
+          {Array.from({ length: safeCount }).map((_, dot) => (
+            <View key={dot} style={[styles.dot, dot === index && styles.dotActive]} />
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** The headline numbers for the current window in one snapping horizontal
+ * rail, an exact match for the web finance/manager ReportKpiStrip cards. */
+export function ReportKpiStrip({ data }: { data: Reports }) {
+  const o = data.overview;
+  const expected = Number(data.pipeline.expected_amount || 0);
+  const collected = Number(o.revenue || 0);
+  const collectedShare = expected > 0 ? (collected / expected) * 100 : 0;
+  const margin = Number(o.profit_margin || 0);
+  const leader = data.agents.find((a) => Number(a.revenue) > 0 || Number(a.units) > 0);
+
+  const tiles: {
+    label: string;
+    value: string;
+    hint: string;
+    icon: IconName;
+    tone: KpiTone;
+  }[] = [
+    {
+      label: "Sold units",
+      value: num(o.units_sold, 2),
+      hint: `${num(o.settlements)} settled line${Number(o.settlements) === 1 ? "" : "s"}`,
+      icon: "box",
+      tone: "amber",
+    },
+    {
+      label: "Expected gross",
+      value: moneyShort(data.pipeline.expected_amount),
+      hint: "Selling price × sold units",
+      icon: "trend",
+      tone: "emerald",
+    },
+    {
+      label: "Collected gross",
+      value: moneyShort(o.revenue),
+      hint: `${collectedShare.toFixed(1)}% of expected`,
+      icon: "wallet",
+      tone: "sky",
+    },
+    {
+      label: "Profit",
+      value: moneyShort(o.gross_profit),
+      hint: `${margin.toFixed(1)}% margin on sales`,
+      icon: "trend",
+      tone: "violet",
+    },
+    {
+      label: "VAT in revenue",
+      value: moneyShort(o.vat_collected),
+      hint: "Already inside the selling price",
+      icon: "tax",
+      tone: "sky",
+    },
+    {
+      label: "In-store value",
+      value: moneyShort(o.in_store_value),
+      hint: `${num(o.lots)} lot${Number(o.lots) === 1 ? "" : "s"} still on the shelf`,
+      icon: "store",
+      tone: "emerald",
+    },
+    {
+      label: "Returned",
+      value: moneyShort(o.returned_in_period),
+      hint: "Brought back, not sold",
+      icon: "refresh",
+      tone: "rose",
+    },
+    {
+      label: "Promotions",
+      value: num(data.promotions.units, 2),
+      hint: `${num(data.promotions.lines)} line${Number(data.promotions.lines) === 1 ? "" : "s"} moved`,
+      icon: "gift",
+      tone: "amber",
+    },
+    {
+      label: "Penalties",
+      value: moneyShort(o.penalty_amount),
+      hint: o.penalties
+        ? `${num(o.penalties)} raised · ${moneyShort(o.penalty_amount)} short`
+        : "Every agent brought the full amount",
+      icon: "warn",
+      tone: "rose",
+    },
+    {
+      label: "Best sales agent",
+      value: leader ? leader.name : "—",
+      hint: leader
+        ? `${moneyShort(leader.revenue)} collected · ${num(leader.units)} units`
+        : "No settled sales in this window",
+      icon: "star",
+      tone: "violet",
+    },
+  ];
+
+  return (
+    <View style={styles.kpiPanel}>
+      <View style={styles.kpiHead}>
+        <Text style={styles.kpiTitle}>At a glance</Text>
+        <View style={styles.kpiHint}>
+          <Text style={styles.kpiHintText} numberOfLines={1}>
+            {data.period.label}
+          </Text>
+          <Glyph name="chevron" size={11} color="#71717A" />
+          <Text style={styles.kpiHintText}>swipe</Text>
+        </View>
+      </View>
+      <CardRail count={tiles.length} height={KPI_HEIGHT}>
+        {(width) => (
+          <>
+            {tiles.map((tile) => (
+              <View key={tile.label} style={{ width, height: KPI_HEIGHT }}>
+                <KpiCard
+                  label={tile.label}
+                  value={tile.value}
+                  hint={tile.hint}
+                  icon={tile.icon}
+                  tone={tile.tone}
+                  width={width}
+                  style={{ flex: 1, minWidth: 0, width: "100%" }}
+                />
+              </View>
+            ))}
+          </>
+        )}
+      </CardRail>
+    </View>
+  );
+}
+
+const KPI_HEIGHT = 158;
 
 const styles = StyleSheet.create({
   periodRow: { flexDirection: "row", alignItems: "center", gap: 10 },
@@ -407,4 +625,38 @@ const styles = StyleSheet.create({
   },
   noteLabel: { color: C.textMuted, fontSize: 12.5, flex: 1 },
   noteValue: { color: C.text, fontSize: 13, fontWeight: "900" },
+  kpiPanel: {
+    backgroundColor: "rgba(13,13,22,0.72)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    overflow: "hidden",
+    shadowColor: "#000000",
+    shadowOpacity: 0.4,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 6,
+  },
+  kpiHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingHorizontal: 3,
+    marginBottom: 10,
+  },
+  kpiTitle: {
+    color: "#A1A1AA",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+  },
+  kpiHint: { flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 1 },
+  kpiHintText: { color: "#71717A", fontSize: 10 },
+  dots: { flexDirection: "row", justifyContent: "center", gap: 5 },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.border },
+  dotActive: { width: 14, backgroundColor: C.violet },
 });

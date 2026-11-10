@@ -17,6 +17,8 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
+  type TextStyle,
   type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -330,6 +332,7 @@ export function StatTile({
   icon,
   stops = G.hero,
   onPress,
+  style,
 }: {
   label: string;
   value: string;
@@ -337,9 +340,13 @@ export function StatTile({
   icon: IconName;
   stops?: Stops;
   onPress?: () => void;
+  style?: ViewStyle;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.tile, onPress && { borderColor: C.borderStrong }]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.tile, onPress && { borderColor: C.borderStrong }, style]}
+    >
       <View style={[styles.tileAccent, { backgroundColor: stops[stops.length - 1] }]} />
       <LinearGradient colors={stops} style={styles.tileIcon}>
         <Glyph name={icon} size={14} color={C.white} />
@@ -349,6 +356,181 @@ export function StatTile({
       </Text>
       <Text style={styles.tileLabel}>{label}</Text>
       {hint ? <Text style={styles.tileHint}>{hint}</Text> : null}
+    </Pressable>
+  );
+}
+
+/**
+ * The web console's KPI card, mirrored one-to-one: tone wash, top hairline,
+ * label/value stack, gradient icon tile, and a dotted hint rail.
+ */
+export type KpiTone = "emerald" | "amber" | "violet" | "rose" | "sky" | "slate";
+
+const KPI_TONES: Record<
+  KpiTone,
+  {
+    iconBorder: string;
+    iconFrom: string;
+    iconTo: string;
+    iconText: string;
+    wash: string;
+    bar: Stops;
+    dot: Stops;
+  }
+> = {
+  emerald: {
+    iconBorder: "rgba(52,211,153,0.30)",
+    iconFrom: "rgba(52,211,153,0.25)",
+    iconTo: "rgba(45,212,191,0.05)",
+    iconText: "#A7F3D0",
+    wash: "rgba(52,211,153,0.20)",
+    bar: ["#34D399", "#5EEAD4", "#67E8F9"],
+    dot: ["#34D399", "#5EEAD4"],
+  },
+  amber: {
+    iconBorder: "rgba(251,191,36,0.30)",
+    iconFrom: "rgba(251,191,36,0.25)",
+    iconTo: "rgba(251,146,60,0.05)",
+    iconText: "#FDE68A",
+    wash: "rgba(251,191,36,0.20)",
+    bar: ["#FBBF24", "#FDBA74", "#FDA4AF"],
+    dot: ["#FBBF24", "#FDBA74"],
+  },
+  violet: {
+    iconBorder: "rgba(167,139,250,0.30)",
+    iconFrom: "rgba(167,139,250,0.25)",
+    iconTo: "rgba(232,121,249,0.05)",
+    iconText: "#DDD6FE",
+    wash: "rgba(167,139,250,0.20)",
+    bar: ["#A78BFA", "#F0ABFC", "#F9A8D4"],
+    dot: ["#A78BFA", "#F0ABFC"],
+  },
+  rose: {
+    iconBorder: "rgba(251,113,133,0.30)",
+    iconFrom: "rgba(251,113,133,0.25)",
+    iconTo: "rgba(244,114,182,0.05)",
+    iconText: "#FECDD3",
+    wash: "rgba(251,113,133,0.20)",
+    bar: ["#FB7185", "#FDA4AF", "#F0ABFC"],
+    dot: ["#FB7185", "#FDA4AF"],
+  },
+  sky: {
+    iconBorder: "rgba(56,189,248,0.30)",
+    iconFrom: "rgba(56,189,248,0.25)",
+    iconTo: "rgba(34,211,238,0.05)",
+    iconText: "#BAE6FD",
+    wash: "rgba(56,189,248,0.20)",
+    bar: ["#38BDF8", "#67E8F9", "#6EE7B7"],
+    dot: ["#38BDF8", "#67E8F9"],
+  },
+  slate: {
+    iconBorder: "rgba(255,255,255,0.10)",
+    iconFrom: "rgba(255,255,255,0.05)",
+    iconTo: "rgba(255,255,255,0.02)",
+    iconText: "#D4D4D8",
+    wash: "rgba(161,161,170,0.15)",
+    bar: ["#A1A1AA", "#D4D4D8"],
+    dot: ["#A1A1AA", "#D4D4D8"],
+  },
+};
+
+export function KpiCard({
+  label,
+  value,
+  hint,
+  tone = "emerald",
+  icon,
+  onPress,
+  style,
+  width,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: KpiTone;
+  icon?: IconName;
+  onPress?: () => void;
+  style?: ViewStyle;
+  /** Rendered width, when the parent already knows it (e.g. a snapping rail). */
+  width?: number;
+}) {
+  const { width: windowWidth } = useWindowDimensions();
+  const palette = KPI_TONES[tone] ?? KPI_TONES.emerald;
+  const [cardWidth, setCardWidth] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Two-column grids sit inside the 16pt screen gutter with a 12pt gap.
+  const gridWidth = Math.max(140, Math.floor((windowWidth - 52) / 2));
+  const resolvedWidth = width || cardWidth || (mounted ? gridWidth : 0);
+  // The value must never run into the icon or end in an ellipsis. Size it from
+  // the card width instead of relying on `adjustsFontSizeToFit`, which is a
+  // no-op on web.
+  const baseSize =
+    resolvedWidth === 0 ? 22 : resolvedWidth >= 250 ? 25 : resolvedWidth >= 200 ? 22 : 19;
+  const valueRoom = Math.max(0, resolvedWidth - 36 - (icon ? 48 : 0));
+  const fittedSize = valueRoom
+    ? Math.floor(valueRoom / (0.6 * Math.max(1, value.length)))
+    : baseSize;
+  const valueSize = Math.max(13, Math.min(baseSize, fittedSize));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}
+      style={({ pressed }) => [
+        styles.kpiCard,
+        onPress ? styles.kpiCardPressable : null,
+        pressed && onPress ? styles.kpiCardPressed : null,
+        style,
+      ]}
+    >
+      <LinearGradient
+        colors={[palette.wash, "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.kpiWash}
+      />
+      <LinearGradient
+        colors={palette.bar}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.kpiBar}
+      />
+      <View style={styles.kpiTop}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text
+            style={[
+              styles.kpiLabel,
+              { letterSpacing: resolvedWidth >= 200 ? 1.6 : 1.05 },
+            ]}
+          >
+            {label}
+          </Text>
+          <Text
+            style={[styles.kpiValue, { fontSize: valueSize, lineHeight: valueSize + 3 }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {value}
+          </Text>
+        </View>
+        {icon ? (
+          <LinearGradient
+            colors={[palette.iconFrom, palette.iconTo]}
+            style={[styles.kpiIcon, { borderColor: palette.iconBorder }]}
+          >
+            <Glyph name={icon} size={16} color={palette.iconText} />
+          </LinearGradient>
+        ) : null}
+      </View>
+      {hint ? (
+        <View style={styles.kpiHintRow}>
+          <LinearGradient colors={palette.dot} style={styles.kpiDot} />
+          <Text style={styles.kpiHint} numberOfLines={1}>
+            {hint}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -514,7 +696,7 @@ export function Popover({
 }) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const anchor = useRef<View>(null);
+  const anchor = useRef<React.ComponentRef<typeof View>>(null);
 
   function close() {
     setOpen(false);
@@ -1284,6 +1466,73 @@ const styles = StyleSheet.create({
   tileValue: { color: C.text, fontSize: 18, fontWeight: "900", letterSpacing: -0.5 },
   tileLabel: { color: C.textMuted, fontSize: 11.5, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5 },
   tileHint: { color: C.textFaint, fontSize: 11 },
+  kpiCard: {
+    flex: 1,
+    minWidth: 148,
+    minHeight: 140,
+    justifyContent: "space-between",
+    overflow: "hidden",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(13,13,23,0.72)",
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    shadowColor: "#000000",
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 9,
+  },
+  kpiCardPressable: { borderColor: "rgba(255,255,255,0.16)" },
+  kpiCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }, { translateY: 1 }],
+    borderColor: "rgba(255,255,255,0.20)",
+  },
+  kpiWash: {
+    position: "absolute",
+    top: -56,
+    right: -48,
+    width: 172,
+    height: 172,
+    borderRadius: 86,
+    opacity: 0.45,
+  },
+  kpiBar: { position: "absolute", top: 0, left: 0, right: 0, height: 1 },
+  kpiTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  kpiLabel: {
+    color: "#A1A1AA",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+  },
+  kpiValue: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    letterSpacing: -0.6,
+    marginTop: 9,
+  },
+  kpiIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kpiHintRow: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.07)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  kpiDot: { width: 6, height: 6, borderRadius: 3 },
+  kpiHint: { color: "#71717A", fontSize: 11, lineHeight: 15, flex: 1 },
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -1468,7 +1717,14 @@ const styles = StyleSheet.create({
     borderColor: C.violet,
     backgroundColor: "rgba(139,92,246,0.08)",
   },
-  input: { flex: 1, color: C.text, fontSize: 15, paddingVertical: 13, minHeight: 48, outlineStyle: "none" },
+  input: {
+    flex: 1,
+    color: C.text,
+    fontSize: 15,
+    paddingVertical: 13,
+    minHeight: 48,
+    outlineStyle: "none",
+  } as TextStyle & { outlineStyle: "none" },
   fieldError: { color: C.red, fontSize: 12, fontWeight: "700" },
   fieldHint: { color: C.textFaint, fontSize: 11.5 },
   toggleRow: { flexDirection: "row", alignItems: "center", gap: 12 },

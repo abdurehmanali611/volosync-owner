@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   ErrorState,
   HeroCard,
+  KpiCard,
   LoadingState,
   MetricRow,
   Panel,
@@ -11,7 +12,6 @@ import {
   RefreshButton,
   Screen,
   ShareBars,
-  StatTile,
 } from "@/components/kit";
 import {
   AgentBoard,
@@ -20,6 +20,7 @@ import {
   ItemBoard,
   NotePanel,
   PeriodPicker,
+  ReportKpiStrip,
   RevenueTrend,
 } from "@/components/reports-bits";
 import { CHART, C, G } from "@/lib/theme";
@@ -80,18 +81,22 @@ export default function Reports() {
             stops={G.hero}
           />
 
+          <ReportKpiStrip data={data} />
+
           <View style={styles.grid}>
-            <StatTile
+            <KpiCard
               label="Issued to agents"
               value={moneyShort(data.overview.issued_in_period)}
+              hint="Handed over in this window"
               icon="wallet"
-              stops={G.agents}
+              tone="sky"
             />
-            <StatTile
+            <KpiCard
               label="Returned"
               value={moneyShort(data.overview.returned_in_period)}
+              hint="Brought back, not sold"
               icon="refresh"
-              stops={G.slate}
+              tone="rose"
             />
           </View>
 
@@ -196,6 +201,6 @@ export default function Reports() {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 18 },
   note: { color: C.textMuted, fontSize: 12.5, lineHeight: 18 },
 });

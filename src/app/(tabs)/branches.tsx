@@ -39,7 +39,7 @@ import {
   type BranchRow,
 } from "@/lib/api";
 import { refreshScope } from "@/lib/scope";
-import { C, G, kindTone, radius } from "@/lib/theme";
+import { branchKind, C, G, kindTone, radius } from "@/lib/theme";
 
 type FormState = {
   name: string;
@@ -472,7 +472,11 @@ export default function Branches() {
       <Sheet
         visible={Boolean(editing)}
         title={editing?.name ?? "Branch"}
-        subtitle={editing ? `${kindTone(editing.kind).label} branch · TIN ${editing.tin || "not set"}` : ""}
+        subtitle={
+          editing
+            ? `${kindTone(branchKind(editing.is_main)).label} branch · TIN ${editing.tin || "not set"}`
+            : ""
+        }
         icon="edit"
         stops={G.branch}
         onClose={closeSheets}
@@ -650,7 +654,7 @@ function BranchCard({
   onEdit: () => void;
   onPromote: () => void;
 }) {
-  const tone = kindTone(branch.kind);
+  const tone = kindTone(branchKind(branch.is_main));
   return (
     <Panel style={styles.card}>
       <View style={styles.cardHead}>
