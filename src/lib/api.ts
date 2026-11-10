@@ -188,6 +188,7 @@ export type BranchRow = Tenant & {
   registered_value: string;
   revenue: string;
   units_sold: string;
+  returned_units: string;
   settlements: number;
   pending: number;
   penalties: number;
@@ -212,7 +213,9 @@ export type Overview = {
   stocked_out_units: string;
   vat_on_stock: string;
   revenue: string;
+  expected_gross: string;
   units_sold: string;
+  returned_units: string;
   vat_collected: string;
   penalties: number;
   penalty_amount: string;
