@@ -396,7 +396,7 @@ export function ReportKpiStrip({ data }: { data: Reports }) {
   const collected = Number(o.revenue || 0);
   const collectedShare = expected > 0 ? (collected / expected) * 100 : 0;
   const margin = Number(o.profit_margin || 0);
-  const leader = data.agents.find((a) => Number(a.revenue) > 0 || Number(a.units) > 0);
+  const leader = data.agents.find((a) => a.rank === 1);
 
   const tiles: {
     label: string;
