@@ -69,7 +69,11 @@ export default function Company() {
   const illustration = Boolean(session?.company.is_illustration);
 
   useEffect(() => {
-    if (!illustration) void loadEntry();
+    if (!illustration) {
+      // Defer the load so the effect does not synchronously update state.
+      const id = setTimeout(loadEntry, 0);
+      return () => clearTimeout(id);
+    }
   }, [illustration, loadEntry]);
 
   async function refreshAll() {

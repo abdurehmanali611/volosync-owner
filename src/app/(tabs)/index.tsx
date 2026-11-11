@@ -24,7 +24,7 @@ import {
   RevenueTrend,
   SubscriptionStrip,
 } from "@/components/reports-bits";
-import { money, num } from "@/lib/api";
+import { compactMoney, money, num } from "@/lib/api";
 import { ensureScope, refreshScope, setAnchor, setBranchScope, setRange, useScope } from "@/lib/scope";
 import { useSession } from "@/lib/session";
 import { C, G, radius } from "@/lib/theme";
@@ -97,28 +97,28 @@ export default function Pulse() {
           <View style={styles.tileGrid}>
             <KpiCard
               label="Stock in store"
-              value={money(data.overview.in_store_value)}
+              value={compactMoney(data.overview.in_store_value)}
               hint={`${num(data.overview.in_store_units, 2)} units`}
               icon="box"
               tone="emerald"
             />
             <KpiCard
               label="Registered (VAT-incl.)"
-              value={money(data.overview.registered_value)}
+              value={compactMoney(data.overview.registered_value)}
               hint={`${num(data.overview.lots)} lots on file`}
               icon="receipt"
               tone="slate"
             />
             <KpiCard
               label="VAT inside sales"
-              value={money(data.overview.vat_collected)}
+              value={compactMoney(data.overview.vat_collected)}
               hint={`${num(data.company.vat_rate, 2)}% read out of the price`}
               icon="tax"
               tone="sky"
             />
             <KpiCard
               label="Penalties"
-              value={money(data.overview.penalty_amount)}
+              value={compactMoney(data.overview.penalty_amount)}
               hint={`${num(data.overview.penalties)} rulings`}
               icon="warn"
               tone="rose"

@@ -15,7 +15,7 @@ import * as React from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 export function SignUpForm() {
-  const passwordInputRef = React.useRef<TextInput>(null);
+  const passwordInputRef = React.useRef<React.ComponentRef<typeof TextInput>>(null);
 
   function onEmailSubmitEditing() {
     passwordInputRef.current?.focus();

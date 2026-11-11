@@ -24,7 +24,7 @@ import {
   RevenueTrend,
 } from "@/components/reports-bits";
 import { CHART, C, G } from "@/lib/theme";
-import { money, moneyShort, num } from "@/lib/api";
+import { compactMoney, money, num } from "@/lib/api";
 import { ensureScope, refreshScope, setAnchor, setBranchScope, setRange, useScope } from "@/lib/scope";
 import { useSession } from "@/lib/session";
 
@@ -86,14 +86,14 @@ export default function Reports() {
           <View style={styles.grid}>
             <KpiCard
               label="Issued to agents"
-              value={moneyShort(data.overview.issued_in_period)}
+              value={compactMoney(data.overview.issued_in_period)}
               hint="Handed over in this window"
               icon="wallet"
               tone="sky"
             />
             <KpiCard
               label="Returned"
-              value={moneyShort(data.overview.returned_in_period)}
+              value={compactMoney(data.overview.returned_in_period)}
               hint="Brought back, not sold"
               icon="refresh"
               tone="rose"

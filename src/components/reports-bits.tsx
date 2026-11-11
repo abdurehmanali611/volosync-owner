@@ -335,7 +335,10 @@ export function CardRail({
   const [width, setWidth] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [index, setIndex] = useState(0);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const fallbackWidth = Math.max(0, windowWidth - 64);
   const railWidth = width || (mounted ? fallbackWidth : 0);
   const cardWidth = Math.min(Math.max(0, railWidth - CARD_INSET * 2), 300);

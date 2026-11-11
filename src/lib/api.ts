@@ -119,20 +119,38 @@ export function money(value: string | number | null | undefined): string {
   })} ETB`;
 }
 
-/** Same figure without decimals, for tiles where space is tight. */
-export function moneyShort(value: string | number | null | undefined): string {
-  const amount = Number(value ?? 0);
-  if (Math.abs(amount) >= 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M ETB`;
-  if (Math.abs(amount) >= 10_000) return `${(amount / 1000).toFixed(1)}K ETB`;
-  return money(amount);
-}
-
 export function num(value: string | number | null | undefined, digits = 0): string {
   const amount = Number(value ?? 0);
   return amount.toLocaleString("en-GB", {
     minimumFractionDigits: 0,
     maximumFractionDigits: digits,
   });
+}
+
+/**
+ * Compact number for tight cards: 342,500 → "342k", 1,830,645 → "1.8M".
+ * Values under a thousand stay exact.
+ */
+export function compactNum(value: string | number | null | undefined, digits = 0): string {
+  const amount = Number(value ?? 0);
+  const size = Math.abs(amount);
+  if (!Number.isFinite(amount) || size < 1_000) return num(amount, digits);
+  if (size < 10_000) {
+    const text = (amount / 1_000).toFixed(1).replace(/\.0$/, "");
+    return `${text}k`;
+  }
+  if (size < 1_000_000) {
+    const thousands = Math.trunc(amount / 1_000);
+    return `${thousands.toLocaleString("en-GB")}k`;
+  }
+  const millions = amount / 1_000_000;
+  const text = Math.abs(millions) >= 100 ? millions.toFixed(0) : millions.toFixed(1);
+  return `${text.replace(/\.0$/, "")}M`;
+}
+
+/** Compact money with the same trailing-currency house style. */
+export function compactMoney(value: string | number | null | undefined): string {
+  return `${compactNum(value)} ETB`;
 }
 
 export function dateLabel(value: string | null | undefined): string {

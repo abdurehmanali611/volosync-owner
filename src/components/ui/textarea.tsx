@@ -6,11 +6,10 @@ function Textarea({
   className,
   multiline = true,
   numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.
-  placeholderClassName,
   onFocus,
   onBlur,
   ...props
-}: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {
+}: React.ComponentProps<typeof TextInput>) {
   const [focused, setFocused] = useState(false);
   return (
     <TextInput
@@ -32,7 +31,6 @@ function Textarea({
         props.editable === false && 'opacity-50',
         className
       )}
-      placeholderClassName={cn('text-muted-foreground', placeholderClassName)}
       multiline={multiline}
       numberOfLines={numberOfLines}
       textAlignVertical="top"

@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView, type AndroidSymbol, type SFSymbol } from "expo-symbols";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -458,7 +458,10 @@ export function KpiCard({
   const palette = KPI_TONES[tone] ?? KPI_TONES.emerald;
   const [cardWidth, setCardWidth] = useState(0);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   // Two-column grids sit inside the 16pt screen gutter with a 12pt gap.
   const gridWidth = Math.max(140, Math.floor((windowWidth - 52) / 2));
   const resolvedWidth = width || cardWidth || (mounted ? gridWidth : 0);
@@ -721,6 +724,7 @@ export function Popover({
   return (
     <>
       <View ref={anchor} collapsable={false} style={style}>
+        {/* eslint-disable-next-line react-hooks/refs -- toggle only reads the anchor inside the press handler */}
         {renderTrigger(open, toggle)}
       </View>
       <Modal visible={open} transparent animationType="fade" onRequestClose={close} statusBarTranslucent>
@@ -1071,7 +1075,7 @@ export function RefreshButton({
   stops?: Stops;
   label?: string;
 }) {
-  const spin = useRef(new Animated.Value(0)).current;
+  const spin = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
     if (!busy) {

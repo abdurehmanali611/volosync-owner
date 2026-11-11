@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Platform, TextInput } from 'react-native';
 
-function Input({ className, onFocus, onBlur, ...props }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {
+function Input({ className, onFocus, onBlur, ...props }: React.ComponentProps<typeof TextInput>) {
   const [focused, setFocused] = useState(false);
   return (
     <TextInput

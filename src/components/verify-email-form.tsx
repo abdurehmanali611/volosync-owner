@@ -111,9 +111,12 @@ function useCountdown(seconds = 30) {
   }, [seconds, stopCountdown]);
 
   React.useEffect(() => {
-    startCountdown();
-
-    return stopCountdown;
+    // Defer so the first tick is not a synchronous state update in the effect.
+    const id = setTimeout(startCountdown, 0);
+    return () => {
+      clearTimeout(id);
+      stopCountdown();
+    };
   }, [startCountdown, stopCountdown]);
 
   return { countdown, restartCountdown: startCountdown };

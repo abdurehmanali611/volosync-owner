@@ -13,7 +13,7 @@ import * as React from 'react';
 import { TextInput, View } from 'react-native';
 
 export function ResetPasswordForm() {
-  const codeInputRef = React.useRef<TextInput>(null);
+  const codeInputRef = React.useRef<React.ComponentRef<typeof TextInput>>(null);
 
   function onPasswordSubmitEditing() {
     codeInputRef.current?.focus();
