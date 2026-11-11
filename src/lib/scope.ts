@@ -19,7 +19,7 @@ type ScopeState = {
 };
 
 let state: ScopeState = {
-  range: "30d",
+  range: "all",
   anchor: dateKey(new Date()),
   branch: null,
   data: null,
