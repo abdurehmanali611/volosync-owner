@@ -29,7 +29,6 @@ import { branchKind, CHART, C, G, medalTone, radius, subscriptionTone } from "@/
 import {
   dateLabel,
   money,
-  moneyShort,
   num,
   RANGES,
   type AgentRow,
@@ -148,7 +147,7 @@ export function SubscriptionStrip({
       <View style={{ flex: 1 }}>
         <Text style={styles.stripTitle}>Annual subscription</Text>
         <Text style={styles.stripSub}>
-          {detail} Fee {moneyShort(subscription.annual_fee)} a year.
+          {detail} Fee {money(subscription.annual_fee)} a year.
         </Text>
       </View>
       <Badge label={tone.label} tone={tone} />
@@ -414,42 +413,42 @@ export function ReportKpiStrip({ data }: { data: Reports }) {
     },
     {
       label: "Expected gross",
-      value: moneyShort(data.pipeline.expected_amount),
+      value: money(data.pipeline.expected_amount),
       hint: "Selling price × sold units",
       icon: "trend",
       tone: "emerald",
     },
     {
       label: "Collected gross",
-      value: moneyShort(o.revenue),
+      value: money(o.revenue),
       hint: `${collectedShare.toFixed(1)}% of expected`,
       icon: "wallet",
       tone: "sky",
     },
     {
       label: "Profit",
-      value: moneyShort(o.gross_profit),
+      value: money(o.gross_profit),
       hint: `${margin.toFixed(1)}% margin on sales`,
       icon: "trend",
       tone: "violet",
     },
     {
       label: "VAT in revenue",
-      value: moneyShort(o.vat_collected),
+      value: money(o.vat_collected),
       hint: "Already inside the selling price",
       icon: "tax",
       tone: "sky",
     },
     {
       label: "In-store value",
-      value: moneyShort(o.in_store_value),
+      value: money(o.in_store_value),
       hint: `${num(o.lots)} lot${Number(o.lots) === 1 ? "" : "s"} still on the shelf`,
       icon: "store",
       tone: "emerald",
     },
     {
       label: "Returned",
-      value: moneyShort(o.returned_in_period),
+      value: money(o.returned_in_period),
       hint: "Brought back, not sold",
       icon: "refresh",
       tone: "rose",
@@ -463,9 +462,9 @@ export function ReportKpiStrip({ data }: { data: Reports }) {
     },
     {
       label: "Penalties",
-      value: moneyShort(o.penalty_amount),
+      value: money(o.penalty_amount),
       hint: o.penalties
-        ? `${num(o.penalties)} raised · ${moneyShort(o.penalty_amount)} short`
+        ? `${num(o.penalties)} raised · ${money(o.penalty_amount)} short`
         : "Every agent brought the full amount",
       icon: "warn",
       tone: "rose",
@@ -474,7 +473,7 @@ export function ReportKpiStrip({ data }: { data: Reports }) {
       label: "Best sales agent",
       value: leader ? leader.name : "—",
       hint: leader
-        ? `${moneyShort(leader.revenue)} collected · ${num(leader.units)} units`
+        ? `${money(leader.revenue)} collected · ${num(leader.units)} units`
         : "No settled sales in this window",
       icon: "star",
       tone: "violet",
