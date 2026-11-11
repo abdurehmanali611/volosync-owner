@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -70,7 +69,6 @@ const BLANK: FormState = {
 };
 
 export default function Branches() {
-  const router = useRouter();
   const [directory, setDirectory] = useState<BranchDirectory | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -315,23 +313,6 @@ export default function Branches() {
             </Panel>
           ) : null}
 
-          <Pressable
-            style={({ pressed }) => [styles.rootCard, pressed && { opacity: 0.85 }]}
-            onPress={() => router.push("/company")}
-          >
-            <View style={styles.rootIcon}>
-              <Glyph name="store" size={17} color={C.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rootLabel}>HEAD OFFICE</Text>
-              <Text style={styles.rootName}>{directory.company.name}</Text>
-              <Text style={styles.rootSub}>
-                TIN {directory.company.tin || "not set"} · VAT {num(directory.company.vat_rate, 2)}%
-              </Text>
-            </View>
-            <Glyph name="chevron" size={14} color={C.textFaint} />
-          </Pressable>
-
           {rows.length === 0 ? (
             <Panel>
               <EmptyState
@@ -538,15 +519,24 @@ export default function Branches() {
           disabled={!editing?.manager || form.password.length < 6}
         />
 
-        <View style={styles.divider} />
-        <Button
-          label="Remove branch"
-          icon="trash"
-          variant="danger"
-          onPress={() => {
-            if (editing) setConfirming(editing);
-          }}
-        />
+        {editing?.is_root ? (
+          <Text style={styles.sheetNote}>
+            This branch is where the company family starts, so it cannot be removed while
+            other branches belong to it.
+          </Text>
+        ) : (
+          <>
+            <View style={styles.divider} />
+            <Button
+              label="Remove branch"
+              icon="trash"
+              variant="danger"
+              onPress={() => {
+                if (editing) setConfirming(editing);
+              }}
+            />
+          </>
+        )}
       </Sheet>
 
       <Confirm
@@ -662,11 +652,9 @@ function BranchCard({
           {branch.name}
         </Text>
         <Badge label={tone.label} tone={tone} icon={branch.is_main ? "star" : "pin"} />
-        {!branch.is_root ? (
-          <Pressable hitSlop={8} onPress={onEdit} style={styles.cardEdit}>
-            <Glyph name="edit" size={15} color={C.violet} />
-          </Pressable>
-        ) : null}
+        <Pressable hitSlop={8} onPress={onEdit} style={styles.cardEdit}>
+          <Glyph name="edit" size={15} color={C.violet} />
+        </Pressable>
       </View>
       <Text style={styles.cardSub} numberOfLines={1}>
         TIN {branch.tin || "not set"}
@@ -779,27 +767,6 @@ const styles = StyleSheet.create({
     padding: 11,
   },
   noticeText: { color: C.emerald, fontSize: 12.5, fontWeight: "700", flex: 1 },
-  rootCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: C.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: C.border,
-    padding: 14,
-  },
-  rootIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
-    backgroundColor: "rgba(139,92,246,0.18)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rootLabel: { color: C.violet, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
-  rootName: { color: C.text, fontSize: 16, fontWeight: "900", marginTop: 1 },
-  rootSub: { color: C.textFaint, fontSize: 11.5, marginTop: 2 },
   card: { paddingVertical: 15 },
   feeCard: {
     gap: 10,
