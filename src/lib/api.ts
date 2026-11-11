@@ -172,6 +172,7 @@ export type Tenant = {
   sales_role_enabled: boolean;
   parent: number | null;
   is_main: boolean;
+  is_illustration: boolean;
   subscription_expires_on: string | null;
   subscription_transaction_id: string;
 };

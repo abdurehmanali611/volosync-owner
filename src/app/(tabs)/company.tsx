@@ -64,9 +64,13 @@ export default function Company() {
     }
   }, []);
 
+  // Illustration companies are demonstration workspaces: nothing to pay for,
+  // so the renewal picker is never loaded or shown.
+  const illustration = Boolean(session?.company.is_illustration);
+
   useEffect(() => {
-    void loadEntry();
-  }, [loadEntry]);
+    if (!illustration) void loadEntry();
+  }, [illustration, loadEntry]);
 
   async function refreshAll() {
     setRefreshing(true);
@@ -93,6 +97,7 @@ export default function Company() {
 
   const { company, subscription, user, counts } = session;
   const tone = subscriptionTone(subscription.state);
+  const mainBranch = session.branches.find((branch) => branch.is_main) ?? company;
 
   async function pay() {
     if (selected.length === 0) {
@@ -159,17 +164,41 @@ export default function Company() {
         />
       }
     >
-      <HeroCard
-        eyebrow="Subscription"
-        value={subscription.expires_on ? `Until ${dateLabel(subscription.expires_on)}` : "Not paid yet"}
-        caption={
-          subscription.state === "unpaid"
-            ? "Enter the bank transaction number below to start the yearly cover."
-            : `${money(subscription.annual_fee)} a year · last paid ${dateLabel(subscription.paid_on)}`
-        }
-        stops={tone.stops}
-        badge={<Badge label={tone.label} tone={tone} />}
-      />
+      {illustration ? (
+        <HeroCard
+          eyebrow="Illustration account"
+          value="No payment required"
+          caption={
+            subscription.expires_on
+              ? `Demonstration workspace · access until ${dateLabel(subscription.expires_on)}`
+              : "Demonstration workspace · fees and renewals are switched off"
+          }
+          stops={G.hero}
+          badge={
+            <Badge
+              label="Illustration"
+              tone={{
+                label: "Illustration",
+                fg: C.violet,
+                soft: "rgba(139,92,246,0.16)",
+                stops: G.hero,
+              }}
+            />
+          }
+        />
+      ) : (
+        <HeroCard
+          eyebrow="Subscription"
+          value={subscription.expires_on ? `Until ${dateLabel(subscription.expires_on)}` : "Not paid yet"}
+          caption={
+            subscription.state === "unpaid"
+              ? "Enter the bank transaction number below to start the yearly cover."
+              : `${money(subscription.annual_fee)} a year · last paid ${dateLabel(subscription.paid_on)}`
+          }
+          stops={tone.stops}
+          badge={<Badge label={tone.label} tone={tone} />}
+        />
+      )}
 
       {notice ? (
         <View style={styles.notice}>
@@ -178,6 +207,61 @@ export default function Company() {
         </View>
       ) : null}
 
+      {illustration ? (
+        <>
+          <Panel
+            title="Workspace at a glance"
+            subtitle="This demonstration company is fully usable — only billing is off"
+            icon="eye"
+            stops={G.hero}
+          >
+            <MetricRow label="Main branch" value={mainBranch.name} icon="star" color={C.amber} />
+            <MetricRow
+              label="Branches"
+              value={`${counts.branches} in the network`}
+              icon="branch"
+            />
+            <MetricRow label="Staff logins" value={String(counts.staff)} icon="agents" />
+            <MetricRow label="Stock lots" value={String(counts.lots)} icon="box" />
+            <MetricRow
+              label="Yearly fees"
+              value="Waived for illustrations"
+              icon="lock"
+              color={C.violet}
+              strong
+            />
+            <MetricRow
+              label="Access until"
+              value={
+                subscription.expires_on ? dateLabel(subscription.expires_on) : "Open-ended"
+              }
+              icon="calendar"
+            />
+          </Panel>
+
+          <Panel
+            title="What to explore"
+            subtitle="The data is real enough to try every workflow"
+            icon="bolt"
+            stops={G.stock}
+          >
+            <View style={{ gap: 10 }}>
+              <Text style={styles.note}>
+                Pulse totals every branch in the company — tap the branch picker to scope one.
+              </Text>
+              <Text style={styles.note}>
+                Reports break the same window down by item, agent, payment method and stock
+                movement.
+              </Text>
+              <Text style={styles.note}>
+                Branches holds the network: add a satellite, promote a main branch and reset
+                manager passwords.
+              </Text>
+            </View>
+          </Panel>
+        </>
+      ) : (
+        <>
       <Panel
         title="Yearly subscription"
         subtitle="Choose the branches and record the payment reference"
@@ -283,6 +367,8 @@ export default function Company() {
           ))}
         </Panel>
       ) : null}
+        </>
+      )}
 
       <Panel
         title="Company details"
@@ -327,12 +413,8 @@ export default function Company() {
         />
         <StatTile
           label="Main branch"
-          value={company.is_main ? company.name : "A branch holds it"}
-          hint={
-            company.is_main
-              ? "The company root heads the network"
-              : "The root is a satellite until promoted"
-          }
+          value={mainBranch.name}
+          hint="Change it from the Branches tab"
           icon="star"
           stops={G.gold}
         />
@@ -355,12 +437,14 @@ export default function Company() {
       </Panel>
 
       <Text style={styles.footer}>
-        Modules and billing are managed by your VoloSync representative. Ask them to change what is
-        switched on.
+        {illustration
+          ? "Illustration workspace — billing is switched off. Ask your VoloSync representative to change modules or company details."
+          : "Modules and billing are managed by your VoloSync representative. Ask them to change what is switched on."}
       </Text>
 
       <View style={{ height: 96 }} />
 
+      {illustration ? null : (
       <Sheet
         visible={pickerOpen}
         title="Branches to renew"
@@ -422,8 +506,7 @@ export default function Company() {
 
         {eligible.length === 0 ? (
           <Text style={styles.note}>
-            No branch is eligible right now — billing holds, zero-fee branches and
-            illustration satellites are skipped.
+            No branch is eligible right now — billing holds and zero-fee branches are skipped.
           </Text>
         ) : null}
 
@@ -431,6 +514,7 @@ export default function Company() {
           <Button label="Done" icon="check" stops={G.stock} onPress={() => setPickerOpen(false)} />
         </View>
       </Sheet>
+      )}
 
       <Confirm
         visible={confirmOut}
